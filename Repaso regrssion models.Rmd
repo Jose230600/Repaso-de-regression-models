@@ -1,0 +1,862 @@
+---
+title: "Repaso de regression models"
+author: "Jose"
+date: "22/01/2022"
+output: html_document
+---
+buscar el link en mis repositorios
+
+[Link del código](https://github.com/Jose230600/Repaso-de-regression-models)
+
+Nota:En el documento puede que se presenten varios errores de ortografía asi como varios caracteres extraños que puedan hacer que se pierda interpretación, por lo cual de ser así me disculpo de antemano, ya que no los corrigo debido a mi escacez de tiempo. Gracias.
+
+Nota: tambien debido a la escacez del tiempo, las interpretaciones estadisticas que se relizaron fueron muy someras, por lo que pueden haber errores, y el contenido de este documento no tiene nungun caracter cientifico serio oficial que lleve a tomar desiciones de tal tipo ni nada por el estilo.
+
+# Objetivo 
+
+El objetivo principal de este documento simplemente es **poner en práctica** ciertas funciones que aprendí en el curso de regression models dado en Coursera por parte de la universidad John hopkins university.
+
+# Conceptos iniciales
+
+sin duda un concpeto claro es el de minimos cuadrados, indicando que que la regresion lineal es aquela linea que tiene el minimo error cuadratico; tambien indican que la regresion lineal es aquella linea que tiene la mnoer variazcion de los datos al rededor; tambien en relacion a esto nombran que el estimado del minimo ucadrado es el promedio empirico lo que queire decir que el promedio o centro de los datos es el que tiene el menor MSE.
+
+La regresion a traves del origen, simplemente es que se cogen los datos y se les rsta el promedio, lo cual hace que queden alrededor de 0 y el intercepto no tome imporntacia; y esta la realizan para entender bien el MSE, donde al saber que los datos quedan al rededor de 0 incluyendo negativos, entonces se suman esas distancias al cuiadrado haibnedolas restado con la linea que minimice esa suma de distnacias, y la menor suma es em menor MSE, donde esta linea que minimiza se va moviendo con la pendiente, y la forma de entender cual es esa linea que minimiza eso es mediante esa pendiente; por ello se realiza regreson a tra ves del orgien para entender eso, porque relamente con la regreson nomral que trae el inteceprto, sige dando la misma pendiente, solo que ahora se tiene que sumar ese intercepto.
+
+en esta explciaicon se habla del concepto de centerizacion, siedo este centrar los datos( lo de restarle el prmedio que se hizo antes), y del proceso de escalacion, que es dividir un dato por la desviacion estandar, donde si se realiza primero centerizacion y despuies escalacion todo ese proceso se conoce como nomralizacion, lo cual sirve para la comparacion de datos al llevarce a una escala normal; tabmien cabe resaltar que en la correlacion, un valor de -1 o 1 indica altamente correlacion y uno de 0 indica que no hay correlacion
+
+# diferencia a modelos de machine learning
+
+es importante destacar, que en el curso se nombra varias veces, que una de las ventajas de los modelos de regresion , es que con estos de manera sencilla, se pueden realizar intervalos de confianza, o inferencias para medir la incertidumble, sin necesidad que tener que relizar algun remuestreo de datos o cosas asi, ya que solo se nombra que para los modeos mas complicados es necesario hacer otras tecnicas para obtener tales inferencias, ademas se nombra que en estos es siempre preferible la facil interpretacion que la presicion, ademas de que generalmente todos lso modelos estan mal, y el buen modelo es aquel que es como un lente que nos permite concentarnos con los datos y por lo menos decirnos alguna cosa verdadera.
+
+
+# algo de codigo
+
+en cuanto a codigo se empieza on lo basico de dibujar los datos en un diagrma de dispersion, usar la funcion `jitter` para visualizar de mejor manera si hay puntos encima de otros, hacer la regreson lineal, dibujar la linea y interpretar los coeficientes, para esto usare datos reales:
+
+```{r,cache=TRUE}
+#UrlDelArchivo <- "https://datosabiertos.bogota.gov.co/dataset/24a7badd-64fb-4fff-b779-69fffa0ba3bb/resource/4c19d85c-7540-4997-b01b-03c02f4ad7fe/download/oas_-_estad_sticas_programas_acad_micos_2009_-_2017.csv"
+#download.file(UrlDelArchivo,destfile = "Lectura.csv")
+dir()
+date()
+```
+
+
+
+```{r}
+datos <- read.csv("Lectura.csv",sep=",")
+dim(datos)
+```
+```{r}
+head(datos)
+```
+```{r}
+datos <- datos[complete.cases(datos),]
+dim(datos)
+head(datos)
+```
+```{r}
+plot(egresados ~ matriculados,datos)
+```
+
+```{r}
+plot(egresados ~ matriculados,datos)
+regrline <- lm(egresados ~ matriculados,datos)
+abline(regrline,lwd=3,col="red")
+```
+```{r}
+resumen <- summary(regrline)$coefficients
+summary(regrline)
+```
+ahora, con lo anterior, Un coeficiente estará dentro de 2 errores estándar de su estimación alrededor del 95% de
+ el tiempo, por lo que, y en nuestro caso para la pendiente, nuestro coeficiente es signifcativamente difetente de 0(hipotesis que se plantea nula, cmo se puede observar para el caso del intercepto, este no es signifcativo, lo cual quiere decir que la hipotesis nula de que el intercepto es 0 se mantiene, por lo que ese interpceto que da, el modelo esta diciendo que de ese no esta seguro):
+ 
+```{r}
+(0.27279) - (2 * 0.01564) # aporixmadamente pedniente
+(0.27279) + (2 * 0.01564) # aproismadamente pendiente
+resumen[1,1]+c(-1,1)*qt(0.975,df=regrline$df)*resumen[1,2] # manual exacto intercpeto
+resumen[2,1]+c(-1,1)*qt(0.975,df=regrline$df)*resumen[2,2] # manual exacto pendiente
+confint(regrline)
+```
+cabe destacar que el intervalo de confainza anterior es un inbtervalo t, el cual se construye a partir del teoerma del limte central(revisar el repaso anterior) que indica a grandes rasgos que el promedio de los datos(en nuestro caso el coeficiente, como el promedio de pendientes de lineas de regresion) se distirbuye normal al ser una variable aleatoria ( esto se demuestra con experimentacion, y no importa cual sea la dsitribucion original de los datos)
+ 
+el anterior coeficeinte implica que si sacamos varias mseutras de tamaño 583 de proeyctos curriculares(los mismos de los datos) en cuanto a numero de matriculados y de egresados, y sacamos un intervalo de confianza de cada mseutra de esos, CERCA del 95% de intevalos PODRIAN contener una pendiente o relacion lineal entre estas dos varaibles como 0.27279
+ 
+ahora, este coeficiente indica el cuanto cambia en la direccion vertical, por unidad de cambio en la direccion horizontal, lo cual queire decir que por el cambio de un matriculado, hay 0.27 cambio en egresado; donde mas propiadamente usando el intervalo de confainza, se puede decir que con un 95% de cofnianza se espera que por un aumento de matriculado crezca egresado de 0.24 a 0.30%
+
+es de resaltar tambien que en este entedimeinto del porque se puede palciar intevglos de cofianza y pruebas de hipotesis, es que esta muy relacioando a la oepracion que se hacia en las purebas de hipotesis, se coge el valor estimado(el que se obtiene), se le resta el parametro real y se divide en una error estandar, el resutlado de ersto sigue una distribucion normal(basicmanete es estandarizar el coeficiente o muestra que se obntuvo co nestos datos, (ya sabemso que es una variable aleatoria)).
+ 
+ 
+```{r}
+plot(egresados ~ matriculados,datos)
+regrline <- lm(egresados ~ matriculados,datos)
+abline(regrline,lwd=3,col="red")
+abline(h=mean(datos$egresados),col="blue")
+abline(v=mean(datos$matriculados),col="blue")
+```
+lo anterior es mas facil de interpretar si comparamos respecto el promedio, notece como por la interseccion se los promedios de matriculados y egresados pasa la regresion lineal, esto es interesante porq notece que es interseccion no esta en otro lado que no tenga relacion, esto indica que por in incemento  sobre el  promedio de matriculados, se espera un incremento de 0.27 de egresados, y a su ves un decremento de un matriculado sobre el proemdio de matriculados genera un decremento de 0.27 egresados; ademas si quiesrmos intentar relacionar este ejemplo con el de porque los hijos de los padres altos no son tal altos como los padres, pero si son mas pequenos son mas pequeños pero no mas pequeños, si hay mas matriculados hay mas egresados pero no tantos como matriculados(de hecho tendrian que haber como 3 matriculadosp ara que haya un egresado), y si hay menos matriculados hay menos egresad0s pero no tantos como matriculados(de la misma forma tendrian que haber menos de 3 matriculados, para que haya aproixmadamente 1 egresado menos)
+
+
+```{r}
+# habiendo 35 matriculados
+predict(regrline,newdata=data.frame(matriculados=c(35)))
+# habiendo 38 matricuklados (3 mas)
+predict(regrline,newdata=data.frame(matriculados=c(38)))
+
+# lo anterior manual
+ 
+0.92699 +3*0.27279
+0.92699 +4*0.27279
+1 +3*0.27279
+
+# para el caso del decremento
+
+0.92699 -3*0.27279
+0.92699 -4*0.27279
+1 -3*0.27279
+```
+fijece como habiendo aproixmadamente 1 egresado, para que este crezca a 2 egresados(que haya un egresado mas) tiene que haber aporixmadamente 3 matricualdos mas, de hecho mejor 4 debido a la inexactidu del calculo
+
+tambien es interesante destacar como este coeficeinte tambin se obtiene con la mltiplicacion de la correlacon entre la dos variables, por el cociente entre la desvaicon estandar del predecido sobre el que predice
+
+```{r}
+cor(datos$matriculados,datos$egresados)*(sd(datos$egresados)/sd(datos$matriculados))
+```
+en esta regresion, tambien se observa que el caso del intercepto de 0, no aporta realmente un significado, en el curso tambien llega a suceder algo similar, donde lo que se realiza es lo siguente: 
+```{r}
+lm(egresados ~ I(matriculados-mean(matriculados)),data=datos)
+```
+
+donde el valor del coeficente anterior, lo que indica es la cantidad de egresados esperados para la cantidad promedio de matriculados(694.717), cabe destacar que si se sacara el summary del anterior modelo, este coeficiente si seria significativo; notece como la funcion `I()`permitio relizar calculos dentro de la funcion lm, esto debido a que un signo menos o mas en el lm podria significar otras cosas y no restar.
+
+finalmente preguntemonos, si hay 1000 matriculados, 1500 y 2000, cuantos egresados se esperan
+
+```{r}
+predict(regrline,newdata=data.frame(matriculados=c(1000,1500,2000)))
+```
+se esperan 264 egresados con 1000 matriculados, 401 con 1500 y 537 con 2000.
+
+
+### intervalo de confianza versus intervalo de prediccion.
+
+tambien se resalta que el intervalo de confianza es para respodner a la pregunta quiero el interalo ALREDEDOR DE LA LIENA ESTIMADA en ese valor particular de X, y el de prediccion es para cuando quiero el intervalo PARA un potencial valor nuevo de Y en ese valor particular de X.
+
+por ejemplo: quiero el intervalo, o la medicion de incertidumbre con un 95% de confianza al rededor de la regresion estimada para cuando hay 1000 matriculados
+
+```{r}
+predict(regrline,newdata=data.frame(matriculados=c(1000)),interval = "confidence")
+```
+osea que de manera mas interpretable, con un 95% de confianza, se espera que con 1000 matricualdos hayan entre 251 egresados y 277.(osea si repertimos tantos intercalos y bla bla cerca del 95% de esos podrian contener un valor entre esos dos...)
+
+ahora si quiero saber el intervalo para un potencial valor de egresados con la cantidad particular de 1000 matriculados:
+
+```{r}
+predict(regrline,newdata=data.frame(matriculados=c(1000)),interval = "prediction")
+```
+fijece como para un valor de 1000 matriculados, se podria llegar a esperar valores potenciales de egresados de tan solo 58 o hasta 471 con este modelo.
+
+el intervalo de predicion siemrpe sera mas grande al de cofnianza, porque en la ecuacion este suma un 1 que hace demsaido mas grande el intervalo, esto se ve mas claro en una grafica:
+
+```{r}
+library(ggplot2)
+newx = data.frame(matriculados=seq(min(datos$matriculados),max(datos$matriculados),length=100)) # hagace 100 datos entre el rango de matricualdos
+p1= data.frame(predict(regrline,newdata=newx,interval = "confidence"))
+p2= data.frame(predict(regrline,newdata=newx,interval = "prediction"))
+p1$interval = "confidence"
+p2$interval = "prediction"
+p1$x =newx$matriculados # valores "simulados" de matricualdos, el de la secuencia 100 datos
+p2$x =newx$matriculados
+dat=rbind(p1,p2)
+names(dat)[1] = "y" # simpelemten q a la priemra columna pongale de nombre y, que es la repsectiva predicicon o "confianza" de la funcion predict
+
+g = ggplot(data=dat,aes(x = x, y = y))# bascimaente es graficar la linea del medio de los intervalos(ni como puntos ni como nada, aun no se le ha dicho como)(que es el mismo valor para los dos intervalos)
+g = g + geom_ribbon(aes(ymin=lwr,ymax=upr,fill=interval),alpha=0.5)# ahora ubique como los intervalos, donde el fill, le dice que ubique dos tipos de intervalo, depndeidno de la categoria (confianza o prediccion)
+g = g + geom_line() # ahora si ahga la meirda anterior como lineas, se pida haber graficado de una aca, pero no saldrina los puntos
+g = g + geom_point(data=data.frame(x=datos$matriculados,y=datos$egresados),aes(x=x,y=y),alpha=0.4)# ahora si meta los putnos originales
+g
+```
+observece como el intercalo de predicion, intenta recoger casi todos los datos, indicancdo zonas potenciales para un valores de x determinados, por ello es que este intervalo con este modelo es tan variado dando respuestas de entre 400 datos, esto tambien se debe a que este intervalo toma en cuenta simpre el termino del error de la regresion, osea tmabien es tan grande el intervalo, debido a tomar en cuenta el error.
+
+otra cosa a resaltar es como al centro de los datos, so nmas pequeños los intervalos, esto es porque entre mas cerca del promedio, se esta mas "seguro" de la estimacion
+
+### R cuadrado
+
+otro aspecto a revisar del modelo, es el valor del r cuadrado este se puede calcular:
+
+```{r}
+summary(regrline)$r.squared 
+```
+este lo que explica es el portentaje de variación TOTAL explicada por la relación lineal con el predictor, en este caso hay un 34 % de variacion total explicada en la relacion lineal con los matriculados, osea nuestro modelo de prediccion solo explica un 34% esa variaciòn 
+
+este tambien se puede calcular como:
+
+```{r}
+cor(datos$matriculados,datos$egresados)^2
+```
+es de restlar que este r cuadrado explica la vraicion total, debido a que la vraicion se compone de variacion de residuales y variacion de los datos 
+
+#validacion
+
+cabe resaltar que para la validaicon del modelo, esto comienza inicialmente de cierta forma con la signifcainca de los coeficientes, una ves claro eso, ahi si se empeiza con las siguientes pruebas.
+
+posterioemtne a eso, se habla de los residuales, esto para validar el modelo(a parte de lo del coeficiente), siendo estos las distnacias entre los valores reales de egresados y la linea de regresion, donde incialmentel oque se hace es realizar uan grafica de estos para revisar si hay algun tipo de patron
+
+```{r}
+residuales <- resid(regrline)
+plot(datos$matriculados,residuales)
+abline(h=0,lwd=2)
+
+```
+notece como al parecer podria haber sierto comportamiento, de que ban creciendo los residuales, a medida que van creciendo los matriculados, lo cual no es buen signo, esto se conoce como Heterocedasticidad
+
+algo q se nombra de reapidez, es que si esta incluido el intercepto, los residuales sumarian 0
+
+```{r}
+sum(residuales)
+```
+
+
+```{r}
+residuales <- resid(regrline)
+plot(datos$matriculados,residuales)
+abline(h=0,lwd=2)
+for (i in 1:length(datos$matriculados)) {
+        lines(c(datos$matriculados[i],datos$matriculados[i]),c(residuales[i],0),col="lightblue")
+}
+```
+en la anterior grafica se oberva mejor el concepto de residual, fijece las lineas de color azul son los resiudales, esas distnacias de la recta modelada a los puntos reales, fiejce que esta grafica es como haber codigo la orginal y ponerla horizontal, ya que en la original ese posible comportamiento de crecimiento, no era tan notorio.
+
+ademas de lo anteior cabe resaltar tambien, que en el curso se resalta que asi un modelo con estas pruiebas parezca no adecaudo, esto no quiere decir que no sirva para nada, ya que nos permite obtener informacion sobre un modelo no ajustado, por ejemplo, de ser esto un indicador de no ajuste para regreson lineal, eso servira de una conlusion, y daria paso a la examinacion de otros modelos
+
+en este apartado tambien cabe resaltar que entre estso patrones, tambien se podria haber observado un cmpotamiento como de seno, lo cunl indica que los datos no son lineales, una curva incompleta, que indica falta de un termino.
+
+esto es improtnate, porque si hay una correlacion entre los residuales y el modelo, entonces indica que se puede encotnrar otro modelo que reduzca mas esas distnancias, oea el error
+
+```{r}
+cov(regrline$residuals,datos$matriculados)
+```
+al mirar la covanriozan entre los residuales y el predicotr, se observa que esta es positva que indicaunca relacion creciente entre los dos, sin embargo, realmente es casi 0, por lo que deprotno no se alcanza a justificar Heterocedasticidad
+
+
+Esta grafica tambien se puede realizar, mediante la fucion plot de R
+
+```{r}
+plot(regrline, which=1) 
+```
+### valores atipicos
+
+en el curso, al realizar estas graficas, generalmente se hacian, ademas de evaluar la validez del modelo, tambien con la intencion de examinar los valores atipicos, si estos cambian mucho o no el modelo, esto se habla con el principio de la palanca, por ejemplo el dato de la grafica del valor 1275, posiblemente sea un otulier que genera mas palanca y "sube" la linea de regresion, sin embargo el dato del 1108, esta mas arriba aun pero al estar mas cerca al centro de gravedad genera menos "palanca"
+
+en esta grafica, al igual que las costriuidas manual mente, lo que se busca es que los valores resiudales, sean irrelacionados con los valores ajustados, ademas de ser independientes y estar identicamente distribuidos con promedio 0(distribuirce normalmente)
+
+observemos esta misma grafica, eliminando este dato 1275, que en cierta forma puede contribuir a que la linea roja no sea horitzontal completamente. para la relaizacion de esto, se podira eliminar directamente el punto y volver a hacer el modelo, y restar los coeficeitnes de ambos para mirar el cambio, la funcion `dfbeta()` realiza esto con todos los puntos, por lo que si se observan valores "grandes", osea menos cercanos a 0, indica que ese punto afecta bastante ya sea para el termino del intercepto o de la pendiente.
+
+como este calculo se haria para todos los puntos, hagamolo y que solo muestre puntos de interes
+
+```{r}
+CambioENCoef <- as.data.frame(dfbeta(regrline))
+CambioENCoef$point <- row.names(CambioENCoef)
+CambioENCoef[CambioENCoef$point %in% c(1108,1327,1275,3),]
+```
+fijece como el valor de 1275 es el que tiene mayor magnitud en el cambio en la pendiente si fuece agregado al modelo(y tambien muy alto el cambio en el intercepto, asi en este caos no  sea de interes), este es de 0.0062, sin embargo no es tan alto el cambio, observemos la grafica al eliminar este dato
+
+```{r}
+prueba <- datos[,c("matriculados","egresados")]
+prueba$punto <- row.names(prueba)
+texto <- prueba[prueba$punto==1275,]
+plot(egresados ~ matriculados,datos)
+regrline <- lm(egresados ~ matriculados,datos)
+abline(regrline,lwd=3,col="red")
+text(texto$matriculados-150,texto$egresados+10,"Posible outlier ")
+points(texto$matriculados,texto$egresados,col="green",pch=19)
+
+```
+
+```{r}
+Sinpunto <- prueba[prueba$punto!=1275,]
+plot(egresados ~ matriculados,Sinpunto)
+regrline2 <- lm(egresados ~ matriculados,Sinpunto)
+abline(regrline2,lwd=3,col="red")
+
+
+```
+el modeol parece haber cambiado mucho?, parece que no
+
+```{r}
+coef(regrline)
+coef(regrline2)
+coef(regrline)-coef(regrline2)
+```
+notece como el resultado de la funcion `dfbeta()`, es equivalente a este cambio en la pendiente, sugiriendo que es ligeramnete menor sin este dato "atipico" la cantidad de egresados por cantidad de matriculados, fijece que este segundo modeo tiene bastante influencia resepcto al intercepto, siendo de cierta forma mejor al ser mas cercano a 0, solo eliminado este punto.
+
+```{r}
+
+plot(regrline2, which=1) 
+```
+sin embargo fijece como al realizar la grafica nuevamente, sin este punto, relamente no se oberva ningun cambio grande, por lo que no es ncesario eliminarlo(y relmente no siento que sea outlier, porque el dato es logico, al ser este una cantidad de egresafos para una de matriculados, de un proyecto curricular diferente a los demas(indepentiende de los demas), osea no es niung dato tomado extrañamente o algo asi)
+
+otras medidas para medir la influencia de cada punto, se logran mediante funcines como:
+
+```{r}
+CambioENCoef <- as.data.frame(hatvalues(regrline))
+CambioENCoef$point <- row.names(CambioENCoef)
+rbind(CambioENCoef[which.max(CambioENCoef$`hatvalues(regrline)`),],CambioENCoef[CambioENCoef$point == 1275,])
+```
+fijece como en este caso, el que se creia outlier antes, no es el que tiene un mayor hatvalue, en este caso es el punto 56, esto es porque esta medida lo que hace a grandes rasgos el calcular una relacion entre la distnacia(residual) de la linea de regresion lineal calculada con el punto atipo al punto "atipico", y la linea de regresion calculada sin el punto atipico al punto atipico.
+
+en cualquier caso, los valores de el punto 56 sige siendo muy bajo para la consideracion de su eliminacion, si es cercano a 1 el valor entonces es un grande outlier
+
+```{r}
+CambioENCoef <- as.data.frame(rstandard(regrline))
+CambioENCoef$point <- row.names(CambioENCoef)
+rbind(CambioENCoef[which.max(CambioENCoef$`rstandard(regrline)`),],CambioENCoef[CambioENCoef$point == 1275,])
+```
+en este caso en cuanto a la medida de desviacones estandares, el puntio 1108 que nates habiamos visto, es el que se lleva el protagonismo, notece que este pnto era el mas alejado del 0, en R con una grafica de scale-location, se grafica estos mismos datos pero en su raiz cudrada
+
+```{r}
+plot(regrline,which=3)
+```
+
+```{r}
+sqrt(5.270673)
+```
+fijece como efectivamente el valor de la grafica para el punto 1108 es la raiz cuadrada del resultado de `rstandard()`
+
+basicamente esta grafica sirve para observar lo de la varianza constante(por la nomralidad que deberian tener los resiudales), osea que se esperara que la linea roja fuera horizontal, sin embargo como ya se habia hablado, al parecer se muestra un ligero comportamiento de crecimiento de varianza, como se ve en lal inea roja, admeas de estom los datos deberian estar al rededir de 1(si son normales los rsiduales, deberian tener desviacion estandar de 1, asi como en la otra grafica miarabamos si tenina promedio de 0)
+
+otra grafica es la qq plot
+
+```{r}
+plot(regrline, which = 2)
+```
+
+fiejce como esta grafica comapra los residuales teoricos con los de los datos en materia de cuantiles, fijece como los datos "atipicos", se encuentran hasta a 5 desviaciones estandares de la media de 0. otra cosa a resaltar es que tal comportamiento de que ambas "colas" esnte por encima de la linea, indica cierto comportamioento de sesgado hacia la izquierda
+
+```{r}
+hist(regrline$residuals)
+```
+```{r}
+CambioENCoef <- as.data.frame(rstudent(regrline))
+CambioENCoef$point <- row.names(CambioENCoef)
+rbind(CambioENCoef[which.max(CambioENCoef$`rstudent(regrline)`),],CambioENCoef[CambioENCoef$point == 1275,])
+```
+en este caso los r student estiman las mima desvaicon esntadar, pero toman en cuenta los hatvalues
+
+la ultima gracia que ofrece R, es la de la distnacia del cocinero, que basciaente muestra, que tanto un punto cambia el modelo, y otra ves de manera similar a las de antes, si la distnacia del cocinero es alta, es peor el punto
+
+```{r}
+CambioENCoef <- as.data.frame(cooks.distance(regrline))
+CambioENCoef$point <- row.names(CambioENCoef)
+CambioENCoef[which.max(CambioENCoef$`cooks.distance(regrline)`),]
+```
+en este caso el punto en cuestion, es ek que tiene mayor distnacia del cocinero(aun asi es baja)
+
+```{r}
+plot(regrline,which = 5)
+```
+en este caso, los puntos deberian ser en ambos casos cercanos a 0, tener resiuales de 0 y palancas de 0, que en otras palaberas indican que sean bien explicados por el modelo(resiudales 0) y no tenga tanto imptaco(un solo punto) en el resultado; en este caso fijece como el puinto en cuestion de 1275  tiene cierta planca alta pero no es el que mas tiene, aun asi esta bastante lejos del 0 del eje y.
+
+En conlusion,  para este modol espicifo, parece quen en cuanto a lo que es influencia de los puntos, respecto a el cambio en el modelo, no hay un valor que tenga tanta imporntacia, para su eliminacion, sin embargo, tales puntos mas "atipicos" lo que si presentan es un alto residual respecto al modelo, lo que indica que no estna siendo bien ajustados por este. lo cual lleva a conluir diciendo que no es encesario elimnarlos en cuanto a influencia de que estos puntos solos, cambien el modelo drasticamente, pero el hecho que tengan tanta varaicion, indica una ves mas el poco  cuadrado o pexplicacion de la varianza de modelo
+
+
+## normalidad
+
+fijece como en varios de los anslis anteriores, lo que se busca es mirar como se comprta le modelo dependiendo de puntos espeicfiicos que puedan tener cierta inluencia especial, para asi ver si se inluyen o no para mejorar el modelo resepcto a medidas como la normalidad de los residuales, esto es buscando que tengna promedio 0 y desviacion estndar 1 (lineas rojas sean horizontales en ciertas graficas), para hacer un test exacto para probar la normalidad de los resiudales, se puede utilizar la prueba de shapiro
+
+```{r}
+shapiro.test(regrline$residuals)
+```
+
+en este caso observece como el p valor es menor a un nivel de signifcancia de 0.05, por lo que se refuta la hipotesis nula que decia que los residuales se comportan de manera normal, esto de cierta forma se podia llegar a pensar, debido a que varios valores "atipicos" como en la grafica qq, estaban a muchas desvaiciones esntadares de la media de 0, y no cercanos a 1 como se confirma en la scale location plot
+
+```{r}
+Sinpuntos <- prueba[-which(prueba$punto %in% c(1108,1327,1275,832,279),),]
+plot(egresados ~ matriculados,Sinpuntos)
+regrline3 <- lm(egresados ~ matriculados,Sinpuntos)
+abline(regrline3,lwd=3,col="red")
+```
+```{r}
+shapiro.test(regrline2$residuals)$p.value
+shapiro.test(regrline3$residuals)$p.value
+```
+fijece como con el modelo qu no contiene el mayor outlier, de cuerta forma el p valor se acerca mas al 0.05, sin embargo para nada va a hacer q los datos se dsitrbuyan normal, inluso si se eliminan todos aquelos outliers iniciales como el modelo 3; con esto ya se compueba que el modelo lineal no funciona para estos datos
+
+## prueba de homoscedasticidad
+
+habiamos observado que al parecer se observava cierto crecimiento en los resiudales pero que este parecia no tan signiifcativo, para porbar esto de manera oficial se pude realizar el test de Breusch-Pagan
+
+```{r}
+library(lmtest)
+bptest(regrline)
+```
+en este caso nuevamente se rechaza la hipotesis nula de que el modelo tiene homooscedasticidad, a favor de la alteirnativa de que el modelo tiene heterocedasticidad lo que indica que la varianza de los resiudales no es constante(como deberia sr si se dsitribuyera normal(todo alrededor del promedio de 0)); fiejce como esto ya se habia observado de manera ligera con la grafica inciial de resiudales versus ajustados, dodne se observaba ligero creiceminto, sin embargo no era tan notorio, de hecho con la prueba de covarrianza parecia evadirce tal problema, sin emargo en la grafica de sclae location, si se habia notado un patro de criemitno en lal inea roja no siendo horizontal, ademas de no estar al rededor de 1 esa desviacion de los residuales estandarizados.
+
+## independencia en los errores
+
+```{r}
+dwtest(regrline,alternative = "two.sided")
+```
+de la misma forma, el modelo lineal no pasa este test, al rechazarce la hipotesis nula de que la autocorrelacion de los errores es 0, indicando en favor de la alternativa que si hay autocorrelacion en los residuales(tambien se observo esto en la scale location plot)
+
+```{r}
+cor.test(datos$egresados,datos$matriculados) 
+```
+fiejce como apesar de que nose pasen las pruebas anteriores, la prueba de correlacion si se pasa al rechazar la nula que decia que la correlacion era 0; lo cual indica que si dos varaibles estna correlacionadas(como este caso) no queire decir que haya una relacion lineal entre estas
+
+
+# regresion multiple
+
+en el curso, tambien se explica la regresion multiple, se realiza simplemente agregando predictores a la funcon lm, por ejemplo agregemos el predictor de retirados, para ver si con mas retirados hubiesen menos egresados, o algo asi; cabe resltar q de manera general se muestra en el curso que esta funcion, realmente para hacer la regresion simple, de cierta forma ya era una regreon multiple, solo que el resultado del regresor del interpecto se obtenia de un predictor de un vector de unos.
+
+```{r}
+regrline3d <- lm(egresados ~ matriculados + retirados,datos)
+summary(regrline3d)
+```
+el coeficeinte de retirados es  significativo al nivel de 0.05, al rechazar la hipoteiss nula de que el coeficente es igual a 0; y este se interpreta como: se espera un cambio de 0.822 en la cantidad de egresados por unidad de cambio en la cantidad de retirados MANTENIENDO la cantidad de matriculados(o todos los otros predictores) constante; por lo que podriamos decir que por un retirado mas que alla se espera un incremento de 0.82 de egresado(no parece tan logico) manteniendo la cantidad de matriculados constante
+
+cabe resltar que bajo esta funcion de regresion multiple, que  basicamente consiste, digamos para este caso practico, realizar una regresion simple entre matriculados(como Y), y retirados como x, de es modelo se tomarian los residuales, y estos residuaels se usarian como predictor para otra regresion entre egresados(como Y) y estos residuales (como X)( el coeficeinte de este predictor x seria el mismo de la regresion multiple original, y se repetiria el mismo procedimiento para el otro regresor); este proceso seria iteraitvo para la cantidad de regresores que se utilicen.
+
+```{r}
+residiudalls <- resid(lm(matriculados ~ retirados,datos))
+lm(datos$egresados ~ residiudalls)
+residiudalls <- resid(lm(retirados ~ matriculados,datos))
+lm(datos$egresados ~ residiudalls)
+```
+fijece como los resultados de los coeficientes de estas dos regresiones son los mismos de la funcion original con los dos predictores; ademas de esto, esto podria ilustrar el porque de la interpretacion de q el coerficiente es el cambio en Y mantiendo los otrosp redicotres fijos, ya que la forma de "eliminarlo" es de cierta forma analizar el comprtamiento den uestra Y pero solo repscto a cada predictor(pero aun asi los otros estan ahi de cierta forma constantes implicitamente)
+
+## cambio de comportamiento de regresores
+
+algo demasiado interesante, util y de suma importancia, son los posibles cambios que pueden haber en las conlusiones, del supuesto comportamineto que ofrece un predictor resepcto a la varaible de interes, que se da cuando se agregan otros predicotres, esto es mirar como una variable cambia su efecto, al tener en cuenta otras variables, para mirar esto, observemos el comportamiento indiviudal de la variable de inscritos en relacion a matricualods, ademas de la relacion con adimitidos, primiparos, graduados y retirados(las cuantitativas esopecialmente)
+
+nota: las siguinetes partes en negrilla, fueron conlusiones entendidas despeus ya gregadas a este documento
+
+
+**esto tambien se muestra en el porque se interpreta la regreison multiple con el hecho de mantener los otros predictores constantes, ya que se muestra uan simulacion, en la que se sabe que de un compramiento de Y, x1 la decrece y x2 la crece, pero a su ves definen despues a x1 en terminos de x2, lo que indica que si se hace la regreson solo de Y respecto a x1, esta daria un cioeficente psotivo porque implicitamnete al depende esta asu ves de x2, esta tomando el comportamiento de x2 al mismo timepo de x1 lo cual haria q se interpretara mal la regresion al hacer pensar q el coeficente obtenido de x1 positivo indicara un criemietno en Y por crecimiento en x1, lo cual sabiendo la firmula original de Y donde x1 es decreciente, seria erroneo, por ello se incluyen ambos valores de x1 y x2 en la regresion, para MANTENER constnate x2 asi x1 depende de esta, para asi anlizar solo el comprotamineto de x1 respecto la predcitora**
+
+**teniendo en cuenta lo anteior, es por lo que los siguinetes coeficnetes son "sospechosos" inicialmente, por ejemplo inscritos nos ofreceria un comportamiento positivo para egresados, pero no sabemos si es porque incritos este relacionado con otra variable y q el coeficente este mostrando ese comprtamiento de manera agregada, lo cual nos podria lllvar a conclusiones erroneas si asumimos que SOLO el comprtamieto o cambio en cinscritos crea ese cambio en egresados, es por ello que si se agregan TODAS las otras variables, se elimina este riesgo al asegurarce que el coeficente de cada regresor este explicando SOLO la influencia de ese regresor resepcto a la variable de interes Y, en este caso, el cambio en los coericentes de incritos, indica que posiblemente al hacer la regrsion sola con inscritos, este estaba tomando en cuenta el comportamineto con matriculados(variable q cambia el signo de inscritos al tener una correlacion de cerca del 61%)(como q incritos refleje tambien matriculados(por eso cuando se hacen principales compoenntes se hace un proceso a estos de alta correlacion  para disminuirlos y amntener tales comprotamientos), por lo que al hacer la regrseion con ambos regresores, se esta MANTNIENDO cosntante matriculaos, y asi eliminar el fecto que reflejaba por si solo el coeficente de intercepto, y por eso este disminuye tanto q cambia aquel signo(osea ya no explica esa correlacion de matricualdos al msimo tiempo, sino que por si solo incritos, en realidad itnene es comprmaitneo negativo)** 
+```{r}
+cuantitativas <- datos[,c(8,9,10,11,12,13,14)]
+```
+
+
+```{r}
+summary(lm(egresados~inscritos,cuantitativas))$coefficients[,c(1,4)]
+summary(lm(egresados~admitidos,cuantitativas))$coefficients[,c(1,4)]
+summary(lm(egresados~primiparos,cuantitativas))$coefficients[,c(1,4)]
+summary(lm(egresados~graduados,cuantitativas))$coefficients[,c(1,4)]
+summary(lm(egresados~retirados,cuantitativas))$coefficients[,c(1,4)]
+```
+fijece como inicialmente el coeficiente de una regresion lineal simple de egresados resepcto inscritos, nos diria que a mas inscritos mas egresados(no suena tan ilogico, aun asi muy baja relacion), el comportamiento de admitidos sugiere que al admitir 1 persona mas, hasta se generaria 1 egresado y un poco mas, con primiparos mucho mas la relacion, graduados mucho mas, igual que retirado; tambien notece que parecen significativos todos estos coefciietnes,(esto se nombraba en el curso, que es muy probable que de manera sola, sea significativos los predictores)
+
+observemos el comportamineto al agregar todos como predictores
+
+
+```{r}
+cuantitativas <- datos[,c(8,9,10,11,12,13,14)]
+names(cuantitativas)
+```
+```{r}
+regrline3d2 <- lm(egresados ~.,cuantitativas)
+summary(regrline3d2)
+```
+
+fijece como cambian varios de los coefcientes, como ahora inscritos ofrece un decrecimiento(entre mas inscritos menos egresados MANTEIENDO admitidos constantes,prmiparos..., aun asi sige siendo muy bajo)de la misma forma q para admitidos y primiparos, sin embargo cabe resaltar que estos ya no son significativos a un nivel de 0.05 de significancia; sin embago fijece como matriculados, graduados y retirados siguen siendo significativos, especialmente amtriculados que practicamente ofrece el mismo coeficiente, de manera similar retirados, y graduados disminuye la cantidad de cambio en egresados, pero se sigue mantiendo positiva
+
+
+```{r}
+summary(lm(formula = egresados ~ inscritos + matriculados, data = cuantitativas))
+```
+
+
+```{r}
+summary(lm(formula = egresados ~ admitidos+matriculados, data = cuantitativas))
+```
+fijece como al agregar matricualdos a los modelos de incritos y admitidos, hace que el signo cambie, sin emabargo solo para el caso de incritos, se mantiene la significancia.
+
+es de resaltar, que en el ejemplo del curso, se analizaba la correlacion entre el preedictor que hacia que cambiaba la relacion, sin emabrgo en ese caso habia una correlacion negativa que pdoria haber explicado tal cambio, en este caso sigue habiendo correlacion positiva; para analizar esto de mejor manera, con la funcion `anova()`, se analiza si es necesario agregar a un modelo un predictor; en este caso analicemos como predictor base el caso de matriculados(por su poca variabilidad del coeficeinte y su mantenimento de significancia, al realizar su analisis de manera simple y multivariable), y se le van agregando mas predictores
+
+```{r}
+ConGraduads <- lm(formula = egresados ~ matriculados + graduados, data = datos)
+ConGraduadsYretirados <- lm(formula = egresados ~ matriculados + graduados+retirados, data = datos)
+ConInscritos <- lm(formula = egresados ~ matriculados + graduados+retirados+inscritos, data = datos)
+anova(regrline,ConGraduads,ConGraduadsYretirados,ConInscritos)
+```
+fijece como el anova al agregar el modelo 4 que inluye inscritos, nos indica que no es necesario el agregar tal predictor
+
+```{r}
+ConGraduads <- lm(formula = egresados ~ matriculados + graduados, data = datos)
+ConGraduadsYretirados <- lm(formula = egresados ~ matriculados + graduados+retirados, data = datos)
+ConUltimos2 <- lm(formula = egresados ~ matriculados + graduados+retirados+admitidos+primiparos, data = datos)
+anova(regrline,ConGraduads,ConGraduadsYretirados,ConUltimos2)
+```
+fijece como los grados de libertad(columna df) del ultimo modelo es 2, indicando que se agregaron 2 predictores mas, al parecer necesaria su adicion, sin embargo, se nombra que esta prueba anova, asume normalidad, por lo que en el siguiente curso se deberia tomar mejor este tema; sin mbargo dada la poca significancia de los coeficeintes de admitidos y primiparos, personalmente prefiero dejarlos fuera(en el caso del eje,plo del curso, el predictor de agricultura siempre se mantenia significativo aun con el cambio de signo)
+
+
+cabe resltar que este proceso de agregar o no predicotres, es de cuidado, en primera medida, porque al agregar mas predictores de los necesarios se aumenta el error estandar pero no se genera sesgo (el cambio en el resultado), por lo que esta razon tambien ejemplifica el no comorar modelos mediante e, R cudrado, fijece como el de el siguiente modelo es de 0.4, en compracion al que solo tenia en cuenta matriculados con 0.34, por lo uqe siempre que se agregan mas predicotres, el r cuadrado siempre aumenta; por otro lado si no se agregan mas predictores, como en el caso de solo utilizar inscritos sin otros predicotres como matriculados, se tendira un resultado segado; osea el caso de no incluir predicotres que estan de alguna forma relacionados con el predcitor anterior(en este caso la correlacion entre inscritos y matriculados era de alrededor del 62%)
+
+```{r}
+Final <- lm(formula = egresados ~ matriculados + graduados+retirados, data = datos)
+summary(Final)
+```
+fijece como del modelo anterior, se mantienen las mismas conlcuiones de antes, solo que el predicotr de graduados es aquel que mas genera cambio en egresados, al manetener la cantidad de matriculados y retirados cosntantes, lo cual no es tan ilogico, debido a que (segun internet) el graduado es aquel que no abandona el estudio a diferencia del egresado, por lo que es de esperarce que a partir de la cantidad de graduados que se generen hubiesen a su ves mas cantidad de egresados; por otor lado el predictor de retidados es muy sospechoso(ilogica tal relacion), sin emabrgo esto puede deberce porque este analisis se realiza a todos los proyectos curriculares de todo(paradoja de simpson, si analizaramos solo para un proyecto curricular o algo asi, depronto cambie el resultado)
+
+
+tambien con la funcion confint, se puede pedir un intervalo de confianza para un solo predictor
+
+```{r}
+confint(Final,2)
+```
+con un 95% de confianza para este modelo se tendria un aumento de egresados esperado de entre 0.16 a 0.23 por un aumento en matriculados, al mantener la cantida de graduados y retirados constante( lo q en comparacion al modelo simple es q hay menor crecimeinto por parte de los matriculados en los egreados, al tener en cuenta otras variables como graduados y retirados)
+
+
+fijece que en este modelo, el intercepto ya es significativo, brevemente las perubas de validacion:
+
+```{r}
+shapiro.test(Final$residuals)
+bptest(Final)
+dwtest(Final,alternative = "two.sided")
+```
+se refuta normalidad en errores, se refuta homostecidad, se refuta autocorrelacion igual a 0
+
+en este caso al se un modleo lineal multiple, tambien se agrega la validadcion de multicolineadlidad, o dependencia lineal entre los regresores
+
+```{r}
+library(car)
+vif(Final)
+```
+en este caso, si hubiesen dado valores muy altos, indicaria multicolinealidad en los predictores, al ser valores pequeños, estras varaibles entre ellas no estaran relacionada; rambine con un valor alto de algun predictor en cuanto a vif, se podria elminarlo y comaprar como dsiminuye el vif de los otros preedictores
+
+## regresion lineal multiple, cuando el predicotr es uan variable binaria
+
+en el curso, tambien se enseña a entender hacer una regresion lineal multiple cunado el predictor es una variable bianria, para ello lo pormeiro q se deja claro, es que este predictor sea un factor, o que cada categoria sea "levels", para ello predecire nuevamente el numero de matricualdos, pero esta vez en base a la modalidad, para ello convierto este vector a clase factor
+
+```{r}
+datos$modalidad <- as.factor(datos$modalidad)
+```
+
+```{r}
+Binariaas <- lm(matriculados ~ modalidad,datos)
+Binariaas
+```
+basicmanete, el anteiror modelo, lo que realiza es la comapracion de promedios de grupos, en este caso el dato del intercepto, corresponde a el promedio para el primer nivel(en este caso es para la modalidad de administracion, debido a que el ordena por orden alfabetico los niveles), esto se comprueba de la siguiente manera:
+
+orden de los niveles:
+```{r}
+levels(datos$modalidad)
+```
+promedios de matriculados por modalidad:
+```{r}
+tapply(datos$matriculados, datos$modalidad, mean)
+```
+
+observece como el promedio de matricualdos para administracion es el mismo 640 de la regresion lineal, tambien como el cofeiciente de artes, es basciamente la dierencia entre el promedio de administracion y artes(400 aproximadamente), donde si se coge el 640 y se le resta el 240.95, se obtiene el promedio de artes,
+
+por lo que teniendo en cuenta lo anterior, se osberva que R coge el priemr nivel como el grupo de referencia a comparar con lso otros grupos
+
+si se elimina este "intercepto", lo que se obtiene es directamente los promedios, como coeficientes de la regresion
+
+```{r}
+BinariaasSINinter <- lm(matriculados ~ modalidad-1,datos)
+BinariaasSINinter
+```
+teniendo en cuenta los dos casosa anteriores, se enseña, que la hipotesis para el caso de no tener intercepto, es simplemente cuando los conteos esperados(promedios de los grupos) son diferentes de 0
+
+```{r}
+summary(BinariaasSINinter)
+```
+en este caso, la modalidad de maestria, tiene un p valor mayor del nivel de significacia de 0.05, indicando que no se refuta la nula de que este coeficente es 0, osea que en terminos practicos tambn se puede decir que en maeastria hay parctiocamente 0 estudiantes.
+
+en caso de incluir el intercepto,  se evalua si la diferencia en los promedios resepcto el grupo de referencia es 0(ya sabemos, si pasa esto es com osi los grupos fueran lo mismo, o no hubiese diferencia, esto tiene mas sentido es cuando se compara un medicamento y cosas asi)
+
+
+```{r}
+summary(Binariaas)
+```
+En este caso, se observa que el p valor parara la modalidad de licenciatura es mayor al nivel de significancia de 0.05, por lo uqe no se refuta la nula, de que la diferencia entre los promedios del grupo de ADMINISTRACION y LICENCIARUA es 0, indicando que "son lo mismo",(simplemente se puede afirmar estadisticamente con estos datos, que hay la misma cantidad en licenciatura que en administracion, lo cual parece indicar que en la misma proporcion la gente se divide en estas dos ramas, lo cual parece muy logico)
+
+si se quisiece comparar con otro grupo, toca reordenar la modalidad, para q el valor del intercepto, o las comapraciones, sea otro grupo
+
+```{r,echo=TRUE}
+datos$modalidad <- relevel(datos$modalidad,"INGENIERIA") 
+```
+
+```{r}
+BinariaasRespectoIngenieria <- lm(matriculados ~ modalidad,datos)
+summary(BinariaasRespectoIngenieria)
+```
+notece ahora, como solo respecto al grupo de tecnologia, se puede afirmar que estadisticamente los le proemdio de cantidad de matricualdos en ambas  modalidades es igual, lo cual tiene sentido, sin emabrgo a manera personal, no pense que el mayor grupo de personas fuera de ingenieria, y en segunda medida tecnologia.
+
+Cabe resaltar que el anterior modelamiento, se recomeinda mas con Poisson, que con la dsitribcion normal como se esta haciendo, al ser conteos, esto proque de manera practica, estos conteos, no pueden ser menores a 0, lo cual en una disitrubvion normal, si se da, y además de esto puede ser que la varianza no se a constante. 
+
+**en cuanto a terminos matematicos, si se desease secribir la formula de este modelo de regreson lineal multiple, se dice que estos coeficetnes, van as er multiplicados por varaibles binarias que indican el tipo de grupo al que es el dato, por ejemplo, si a los coeficientes de adminsitracion, artes y todas las demas modalidades se les multiplcia por 0 y se suman, solo quedartia el intercepto de inenieria, por lo que asi se calsificaria a igneiria, pero si tiene un 1 e valor de la variable bianria que multiplica a la modalidad de admsnitracion y el resto de coeficentes 0, entonces al intercepto de ingeiria, se le resataria el coeficente beta de admisnitracion, y se obtendira el proemdio de adminsitriacion, calsfiicandoce asi en este grupo, y asi funcuoanria la predccion matematica.**
+
+para revisar lo de lavarianza, generalmente sep uede bservar una compracion de diagrama de cajas, pero en forma de violin, apra incluir la varianza en la grafica
+
+```{r}
+library(ggplot2)
+ggplot(data=datos,aes(y=matriculados,x=modalidad,fill=modalidad))+geom_violin(colour="black",size=2)
+```
+mirando la varianza al rededor de la media, esta no parece constante, especialemnte para el grupo de maestri, por lo que tales asumciones q es hacen anterioremtne pueden ser erroneas.
+
+## interaccion entre una variable binaria regresora y una cuantitativa
+
+de manera matematica se explica, que si tenemos un ceorciente de intercepto, un coeficiente que multiplcia una varible cuantitativa continua y un coeficiente de una q multiplica un binaria, relamente el coeficente de la varaible cuantitativa, nunca cambia, ya que si la varaible bianria toma el valor de 0, pues el modelo solo miraria la parte "normal", pero si toma el valor de 1, entocnes el coeficeitne de esa variable, se suamria al intercepto, y cambiaria solo este, por el contrario si ademas de esto, se agrega un termino de "interaccion", entre la cuantitativa y la binaria(la vraible cauntitativa multiplique la binaria y ambas multipiquen a un nuevo coeficiente), entonces si ahora la binaria, toam el valor de 0, nuevamente, no se afecta no el interpceto original ni la pendiente de la varaible cuantitativa, pero si toma el valor de 1, aparte de modificar al intercepto, este nuevo termino de interaccion, afectara al termino de la cauntitativa, al sumar el coeficente de interaccion, con el de la cuantitativa.
+
+```{r}
+datos$modalidad <- relevel(datos$modalidad,"ADMINISTRACION") 
+SinInteraccion <- lm(egresados ~ matriculados + factor(modalidad),datos )
+summary(SinInteraccion)
+```
+en este caso, la pendiende de 0.25305, osea aumento de egresados por unidad de matricualdos, es la misma SIN IMPORTAR EL TIPO DE MODALIDAD, sin emabrgo, si cambia el intercepto del eje y, siendo para adminsitracion(ose la recta del grupo de adminsitracion) de -20.16, la de ingenieria, -20.16+40.10420, esto se observa mejor, de manera grafica:
+
+```{r}
+g <- ggplot(data=datos,aes(y=egresados,x=matriculados,color=modalidad))+geom_point()
+g <-g + geom_abline(intercept=coef(SinInteraccion)[1],slope=coef(SinInteraccion)[2],color="coral1")
+g <- g + geom_abline(intercept=coef(SinInteraccion)[1]+coef(SinInteraccion)[3],slope=coef(SinInteraccion)[2],color="yellow4")
+g
+```
+con el modelo anterior, se hace para cada grupo una regresion, por ejemplo para el grupo de admisnitracion, por un incremento en la cantidad de matriculados, crecera en 0.25 la cantidad de egresados, igual que para el grupo de ingenieria, sin emabargo, la unicad difenrencia entre los modelos, es que si hay 0 matricualdos, se esperan -20.16 egresados en admisnitrcon, y 40.10420 en ingenieria; lo cual en terminos practicos solo muestra la diferncia en cantidades para cada grupo, pero no nos muestra realmente el crecimiento lineal para cada grupo POR ELLO ES QUE SE APLCIA LA INTERACCION para modificar tales pendientes.
+
+```{r}
+ConInteraccion <- lm(egresados ~ matriculados * factor(modalidad),datos )
+summary(ConInteraccion)
+```
+notece ahora, como surgen diferntes coeficientes de interaccion entre la cuantiaattiva y cada modalidad, obteniendoce:
+
+```{r}
+g <- ggplot(data=datos,aes(y=egresados,x=matriculados,color=modalidad))+geom_point()
+g <-g + geom_abline(intercept=coef(ConInteraccion)[1],slope=coef(ConInteraccion)[2],color="coral1")
+g <- g + geom_abline(intercept=coef(ConInteraccion)[1]+coef(ConInteraccion)[3],slope=coef(ConInteraccion)[2]+coef(ConInteraccion)[8],color="yellow4")
+g
+```
+por lo que con el modelo anterior, si corresponde al grupo de adminsitracion, por un aumento en la cantidad de matricualdos, se sepera un crecimiento de 0.1849 y si hay 0 matricualdos se espran 23.5 egressados, y si es del grupo de ingenieria, se espera que por 1 incremento en al cantidad de matricualados, haya un incremento de 0.25451(0.1849+0.06963) egresados, y si hay 0 matriculados se esperan 
+18.83536(20.5-4.66) egresados
+
+**CABE RESATILAR QUE LAS REGRESIONES LINEALES ANTERIORES SON EQUIVALENTES A FILTRAR LOS DATOS PARA CADA TIPO DE GRUPO, Y HACER UNA REGERESION LINEAL ENTRE EGRESADOS  MATRICUALOS DE ESOS DATOS, solo cambian los p valores pero no mucho**
+
+**trambien se resalta que la forma de hacer las cosas es miy diferente, LO P VALORES DE LA ITNERACION, NOS DICEN SU HAY UNA DIFERNTECIA SIGNIFICATIVA ENTRE LAS PENDIENTES, NO NOS DICEN SI EL COFEICNIETE ES SIGNIFICATIVO DE LA REGERSON POR SI SOLA, por ejemplo en este caso el coerficenite de ingenieria NO ES SINGIIFCATIVAEMNTE DIOFERNETE AL DE ADMINSITRIACION, pero si hacemos la regresion por aparte para solo los datos de ingenieria si nos da que esa pendiente es significativa:**
+
+```{r}
+muestra <- datos[datos$modalidad == "INGENIERIA",]
+intento <-  lm(egresados ~ matriculados,muestra)
+summary(intento)
+
+```
+
+teniendo en cuenta lo anterior, se conluye que RESPECTO AL GRUPO DE ADMISNITRACION, NO es significante la diferencia entre pendientes con los otros grupos, indicando que psoiblemente analizando la regresion en general para cualquier grupo con admisnitracion, no esta mal, habria que realizar una respecto a toso los grupos, para revisar si hay alguna significancia.
+
+
+## analisis a ciertos comportamientos en tre grupos
+
+una vez explicado lo anterior, se empieza a generar ciertas concluoones, en el caso que se hubiese graficado los datos del diagrama de dispsersion, donde se note con los colores que calarmente un grupo va creciendo "paralelamente" al otro, solo q solo cambia el intercepto, ps ya sabemos como ajustar eso con regresion lineal a cada grupo, y ademas al tener la msima pendiente SE CONLUYE QUE x(matricuaods en nseutro caso) no esta relacionado al grupo.(en nuestro caso no se ve tan claro)
+
+otro caso que se analiza, es si el grafico de dispersion muestra que a lo largo de casi la misma linea, en un extremo esa un grupo u en el otro esta el otro grupo, en neustro caso practico esto de cierta forma se observa con el grupo de tecnologia y ingenieria, para los matricualdos mayores a 500, notece como los morados estan mas acumulados cerca al 500 y los amarillos como a los 1400, sin emabrgo hay gran parte de ingenieria que tambn tiene valores bajos, por lo que tal disticion no es tan clara, EN CASO DE CUMPLIRCE, se indicaba  en el curso que la cantidad de X si dependia resepcto al grupo, sin embargo para nuestro caso, seria interante mirar si es logran diferncar tales grupos:
+
+```{r}
+datos$modalidad <- relevel(datos$modalidad,"INGENIERIA")
+ConInteraccionRespectoingenieria <- lm(egresados ~ matriculados * factor(modalidad),datos )
+summary(ConInteraccionRespectoingenieria )
+```
+notece como lo que nos indica el curso, EFECTIVAMENTE se cumple, en este caso al haber sobservado tal comprotmiento en el diagrama de dispersion, salia la duda si de manera forma se pdoia decir que la cantidad de matriculados si denepdnia del tipo de grupo, lo cual con la regreson anterior se muestra que respcto al grupo de ingeniria, efectivamente el grupo de tecmologia es diferente teniendo mayor pendiete inengenieria(0.25 respecto a 0.25-0.12=0.13 de tecnologia), indicando que se esperan mas egresados para el grupo de ingenieria en comparacion al de tecnologia, y tambien resepcto al grupo de licenciatura, se encuentra que es significante la diferencia con ingenirai, teniendo mayor pendiente licenciatura(0.25451+0.14096= 0.39547, respceto al 0.25451), de manera grafica:
+
+```{r}
+g <- ggplot(data=datos,aes(y=egresados,x=matriculados,color=modalidad))+geom_point()
+g <-g + geom_abline(intercept=coef(ConInteraccionRespectoingenieria)[1],slope=coef(ConInteraccionRespectoingenieria)[2],color="coral1")
+g <- g + geom_abline(intercept=coef(ConInteraccionRespectoingenieria)[1]+coef(ConInteraccionRespectoingenieria)[7],slope=coef(ConInteraccionRespectoingenieria)[2]+coef(ConInteraccionRespectoingenieria)[12],color="violetred1")
+g <- g + geom_abline(intercept=coef(ConInteraccionRespectoingenieria)[1]+coef(ConInteraccionRespectoingenieria)[5],slope=coef(ConInteraccionRespectoingenieria)[2]+coef(ConInteraccionRespectoingenieria)[10],color="deepskyblue1")
+g
+```
+otro caso qeu se analiza, es aquel, donde respcto a un mismo valor de x, hay valores mas elevados en el eje y pra un grupo, en comparacion a otro grupo, en este caso pracitoc, se podria mirar, si al nivel de 400 matriculados, es diferente el grupo digmoas de artes, respetco a ingenieria, otro caso es similar al priemro, en el que los grupos parecian crecer palarelamente, pero cuando las pendientes son mucho mas altas y otra vz surge lo de que a un valor fijo de x, se pueden compaarar los grupos, pero tambn se dice igual que en ese caso, que lso grupos no estan relacionados a x; para ambos casos de manetenr x fija, no se enseña como hacerlo de manera estadsitica.
+
+el ultimo caso, es aque que un grupo baja y el otro sube, lo cual si se fija el valor de x en algun lado, se llega a una conlusion, y se se fija en otro lado, se llega a otra conlusion
+
+Tambien se podria modelar, respcto la interaccion de dos cuantitativas, pero esto se analizaria de manera matematica como cambia la ecuacion, pero resepcto a ese no se profundiza en le curso.
+
+```{r}
+datos$modalidad <- relevel(datos$modalidad,"ADMINISTRACION")
+prueba1<- lm(egresados ~ matriculados + factor(modalidad),datos )
+prueba2<- lm(egresados ~ matriculados * factor(modalidad),datos )
+anova(prueba1,prueba2)
+```
+fijece como con una prueba anova, tambien se puede probar si es necesario agregar inteaccion al modelo, para el caso de administracion, el anova dice que no es necesario(lo cual ya habiamos revisado que es cierto)
+
+```{r}
+datos$modalidad <- relevel(datos$modalidad,"INGENIERIA")
+prueba1<- lm(egresados ~ matriculados + factor(modalidad),datos )
+prueba2<- lm(egresados ~ matriculados * factor(modalidad),datos )
+anova(prueba1,prueba2)
+```
+fijece como esat trpueba anova nos induica los mismos valores, asi cambiemos al grupo de referencia a ingeniria, lo cual pouede ser porque los unicos terminos significantes son 2, que aun asi estan cerca del 0.05, o porque para la prueba anova cambiar el nivel no imoplica ningun cambio en calculos.
+
+## Modelos lineales generalizados
+
+en esta seccion, se presentan basicamente los modelos de regresion logistica y regresion poisson, para estos GLM, se explica que se tienen que tener 3 componentes, una familia de dsitribcion, para modelar los errores aleatorios, un componente sistematico, que seran las varibales de regresion y una funcion de vinculo entre el compknente sistematico y la distribucion, dodne se dice que para la regreson lineal que se ha manejado, la familia es una distribuciion normal, el componente sistematico, es la sumaproducto de los coeficeintes con las varaibles predictoras y la funcion que une eso es decir que el parametro miu de la familia normal de Y(decimos que las que predecimos son normales) sera igual a ese compenne sistematico(en otras palabras, cuando nosotros hacemosu an regresion lineal, estamods dicendo que la multipciacion de los coeficeintes por las varaibles predictoreas, nos va a dar el promedio de la distribucion normal de la que se predice Y, osea al reemplzar valores y obtener un dato para unos valores de los x, es un dato como promedio de los reales, por eso es que se hacen intervalos de confianza alrededr de ese dato y eso)
+
+##Regresion logistica
+
+siguiendo con tales componentes, para la regresion logistica, la familia de dsitribucion es bernulli, indicando que el valor de Y, o la vraible que se predice, toam un valor entre 0 y 1, el modeol sistematico es el mismo de laregresion lineal, y la funcion de link es el logaritmo del odd o el llamado logit,osea el logaritmo de miu sobre 1 menos miu(el odd), osea que en este caso, si reemplzamso algunas variables de lcompennete lineal lo que nos va a dar es un resultado predecido en logits, por eso para obtener el dato en las undiades de nuestos datos, se debe sacar el inverse logit, o exponenciar tal logit, para  despejar el miu
+
+entre las cosas qeu se comprueban, se decia que para el modelo lineal, se bsucaba la vrainza constante(debido a la normalidad), pero para el caso de la dsitrbucion bernullli, la varianza es miu por 1 menos miu dependiendo asi la varianza de cada observacion; finalmente se nombra que los p valores que se utilizan para interpretar, si no se sacan de una muestra de datos muy grandes, puede que no sean aplicables
+
+finalmente se nombra que la regresion logistica, es el proceso de encontrar los mejores coefciientes del componente lineal, para encontrar el mejor logit.
+
+para ejemplificar lo anterior, creare una variable bianria apartir de los datos, agrupando a ingeniria, tencologia y maestria en el mismo grupo, y a licenciatrua,admismnitracuin y artes en el mismo grupo, esto debido a que ingieria y teniolgoia pueden ser similares por componente acdemico, y lecneitarua y adsmnitracion, por se como lo mas general o comun de estudio, y cada uno con un dato "atipico" como meastria y artes
+```{r}
+datosBinaria <- c()
+
+  for( i in 1:length(datos$modalidad)){
+  
+  if(datos$modalidad[i]== "ARTES"){
+     datosBinaria[i] <- 0
+  }
+  if(datos$modalidad[i]== "LICENCIATURA"){
+     datosBinaria[i] <- 0
+  }
+  if(datos$modalidad[i]== "ADMINISTRACION"){
+     datosBinaria[i] <- 0
+  }
+  if(datos$modalidad[i]== "INGENIERIA"){
+     datosBinaria[i] <- 1
+  }
+  if(datos$modalidad[i]== "TECNOLOGIA"){
+     datosBinaria[i] <- 1
+  }
+  if(datos$modalidad[i]== "MAESTRIA"){
+     datosBinaria[i] <- 1
+  }
+  
+  }
+datos$Binaria <- datosBinaria
+```
+
+```{r}
+RegLogit <- glm(Binaria ~ egresados,binomial,datos)
+```
+
+
+```{r}
+plot(datos$egresados,datos$Binaria)
+points(datos$egresados,RegLogit$fitted.values,pch=19,col="blue",xlab="egresados",ylab="prob de grupo ingYtecno")
+```
+prediccion: acontinaucion con el modelo predecimos de manera directa con logits
+
+```{r}
+lodds <- predict(RegLogit, data.frame(egresados=c(50, 100, 150))) 
+lodds
+```
+```{r}
+exp(lodds)/(1+exp(lodds))
+```
+
+cabe resaltar, que anteriormente priemro se hizo alugna prediccion, antes de observar los coerficentes de la regresion, debido a que en el swirl, lo hacian asi priemro, porque predecian el valor de 0 de puntaje, y el modelo decia qeu con 0 puntos anotados, habia una prob de 16% de ganar, lo cual no era logico, y por eso mostraban los coeficentes, mostrando que el modelo no estaba seguro de eso, en nuestro caso, no se que tan real es decir qeu a 0 egresados hay 38% de probabildiad de que sean del grupo de ingneiria.
+
+```{r}
+summary(RegLogit)
+```
+de los apuntes, se dice que aca en los estimados queremos ver que este coeficiente 0.0053138, sea cercano a 0, lo cual si es, asi que parece buen modelo, además que el p valor da altamente significante(en el ejemplo del curso daba como 0.10 y el p valor les daba 0.11), por lo que en comapracion al curso, este modelo para el caso practico parece bueno(el hecho de que para 0 egresados puede aue haya 38% de prob de que sea de ingenieria, no es tan ilogico a compracion al del curso que se sabia que si no anotaban puntos ps no debia haber nada de probabilidad)
+```{r}
+exp(RegLogit$coeff)
+```
+observando este resultado exponenciado, se obtiene que por cada egresado mas que haya, aumenta en alrededor de un 0.5 % la probabilidad de que sea de ingeiria tecnolgoia o maestria.(lo cual en ceirta medida es logico, al haber mas cantidad de matricualdos en ingeniria(como hemos visto antes))
+
+```{r}
+exp(confint(RegLogit))
+```
+observando los intervalos de confianza en las unidades reales, se obtiene que con un 95% de confianza, puede haber un incremento de al rededor de 0.3% a 0.7% de probabilidad de que por un egresado mas, sea del grupo de ingenieria, en este caso es logico el modelo, en el caso del ejemplo del curso, no daba logico porque uno de los lomites era menor a 1, indicando que puede ser que haya incremento, pero tambn puede q haya decremento, esto es el ejemplo que el limite inferior diera un 0.98, esto indicaria que la probabildiad de ser del grupo deiniengiera disminuiria en un 2%, lo cual no puede conluirse al mismno timep oque se dice que tambn puede que aumente.
+
+```{r}
+anova(RegLogit,test="Chisq")
+```
+nota: del antrior codigo se agvrega la palabra explicita de test de  una chi, para obtner el p valor. se explica que este valor 49.152, es el resultado de la diferencia entre la desviacion  de nuestor modelo que incluye una pendiente, y el modelo que solo incliye un intercepto, tiene un Df o grados de liberta de 1(al ser 2 parametros menos 1), la hipotesis nula dice que el coefciente de egresados es 0, en este vaso observando el p valor, se refuta esta hipotesis nula, en favor de la alternativa, diciendo que no es 0 el coeficnete de egresados en el modelo, esto es equivalente a comaprarlo con el chi estadsitico de 
+`qchisq(0.95, 1)`, donde al ser mas grande el 49.152 que este, tambn se refuta.
+
+
+## regresion poisson
+
+para la regresion pission, la familia de dsitribcuon es la ditribvcuion poisson, Y va a tomar un valor entre 0 y el infinito,(osea un conteno no acotado), el mdoelo sistematico otra ves es el mismo, y la funcion de link entre el mopoennte lineal y la  distribuvon solo es el logaritmo de ese miu, en este caso se revisa que la varianza sea igual que miu.
+
+para modelar este caso, siempre se dice que poisson funciona bien para modelar conteos, el ejemplo de calse es cuantas visitas van habiendo a medida que pasa el tiempo, intentemos modelar aca nuevamente egresados en funcion de matricualdos
+
+```{r}
+plot(egresados ~ matriculados,datos)
+```
+
+```{r}
+RegPoisson <-  glm(datos$egresados ~ datos$matriculados,family="poisson")
+```
+```{r}
+plot(egresados ~ matriculados,datos)
+regrline <- lm(egresados ~ matriculados,datos)
+abline(regrline,lwd=3,col="red");
+points(datos$matriculados,RegPoisson$fitted.values,col="blue",pch=19)
+```
+notece como la regresion poisson, ajusta mas esa curva y va indicando el crecimiento (la tasa) por matricualdo que incremente
+
+```{r}
+summary(RegPoisson)
+```
+en opriemra medida, se observa que los coeficientes son significantes, ademas se dice que la residual desviance es altemente menor a la desviacion nula, locual indica un efector fuerte
+
+```{r}
+exp(confint(RegPoisson, 'datos$matriculados'))
+```
+en este caso, se espera un crecimiento de entre 0.12% y 0.13% por matricualdo que haya, en la cantidad de egresados.
+
+una ves relaizado esto, se objserva que para el dato de 0 matricualdos, no deberia haber ni un egresado, a diferncia del curso, en el que para los primeros dias de tiempo, siempre habiana 0 vistias por lo que esos dias no crecia, este fenomeno dicen que se llama "zero inflation", y el otro caso, era que para el ejemplo del curso, dibujaban dos lineas alrededor de la estimada y decian que habia mas varainaza aun que el modelo depronton no explicaba.
+
+respecto an osotros, de todas formas nuestra linea ajustada, nos esta diciendo que para el valor de 0 matroculados hay egresados, lo cual no es correcto, puede que al siguente valor ya ahya algun egresado, pero la idea seria que la curva empieza como desde 0
+
+```{r}
+plot(RegPoisson$fitted.values,RegPoisson$residuals)
+```
+de manera similar a la del curso, para valores bajos del promedio, la varainza es mas alta, lo cual es un porblema, por lo que se dice que debveria sr igual la varianza que el promedio, en este caso es que se recomienta hacer un modelo quasi possion, que dice que la vrainza sea un mulitplic del promedio y no igual.
+
+### proporciones
+
+se continua con como modelar las datas mediante la regresion poisoon, para ello se explica que en el ejmplo de ellos, una parte del total de datos, provenian de un ligar de visitas especificas, y modelaban esta parte de los datos como proporcion del total de visitas, en este caso apra ejemplificar, hagamos los mismo con los datos deineingiera como una proporcion de los egresados.
+
+
+```{r}
+
+datos$datosDeIngenieria <- ifelse(datos$modalidad=="INGENIERIA",datos$egresados,0)
+
+PropPoisson <- glm(datos$datosDeIngenieria ~ datos$matriculados, poisson, offset=log(datos$egresados)) 
+```
+cabe resaltar que para el codigo anterior, en el parametro offset(para indicar el total de la proporcion predecida), no es necesario sumarle 1, debido que en nuestro casi el dato de egresados nunca es 0, a diferencia del ejemplo del curso.(debido a qeu log de 0 no existe); y en terminos mateicamicos, sabemos que la funcion original de la regresion pission es log de miu igual a el compknene lineal, entonce si ahora se agrega la proprocion, entopnces es log de miu sobre log de un total, por lo que este log del total se pasa a la derecha, y simplemente queda el mismo modelo pero otro predictor es el log de ese total, por eso asi se hace el codigo.
+
+ahora graficando las dos lineas de ajuste:
+
+```{r}
+plot(datos$matriculados,PropPoisson$fitted.values,col="blue",pch=19)
+points(datos$matriculados,RegPoisson$fitted.values,col="red",pch=19)
+```
+para observar la linea del modelo azul ajustada, esta predice es la PROPORCION de egresados de ingeniera, resepcto al total de egresados.
+
+```{r}
+plot(datos$matriculados,datos$datosDeIngenieria/datos$egresados)
+points(datos$matriculados,PropPoisson$fitted.values/datos$egresados,col="blue",pch=19)
+```
+
+la anterior grafica, no tiene mucho sentido, debido a que la proporcion de los dei ngieria respecto al dato de egresados, realmente no es una proporcion, simplemente es el msimo dato, por ello aparcen 1 si es el mismo datos y 0 si no lo es, en el ejemplo del cruso, tenia mucho mas sentido, porque digamos que la columna de visitas era la suma del datos especifico del numerador de la rpoprocion(en este caso es como si egresados fuera como un dato general que recogiera a todosl os egresados de una universidad, no como en este caso que el dato simplemente es la cantida de egresados de ese proyecto curricular), y el dato del a proporciobn es una columna especifica que indica de ese total cuantos son de ese tipo(en este caso el dato ingieria deberia ser una parte de ese total, como decir si el total fuera la cantida de egresados de la universidad distrital, cuantos de esos so nde ingenierira)en este caso no se darian valores de 1 y 0, sino las propricones resepctivas, teniedno un diagrma de dispersion mas logico, donde ahi si la liena azul intnetaria predecir esa proporcion y tendira sentido.
+
+en este caso se puso en pracrtica lo anterior, para tratar el tema del curso, y se logra ver que la linea azul en comparacion a la linea roja(la anterior grafica) si intentaba tener al inicio datos cercanos a 0, como mepenzando en cero deacuerdo al o que queriamos, y era, porque al ser ese dato(simplystats) una porprocion del total, se sabia qeul ap orprocion en esos moemntos inciales, era 0, debido a que no habia visitas
+
+en conclusion, las proporcioens se pueden cosntruir mejor con lo que nombre anteriormente, y estas de cierta forma pueden lograr mostrar mejor tal comproamieto de ceros al inicio de la prediccion.
+
+
+finalmente en el quizz, se habla de la regresion possion, pero cuando el predictor era una categoria, que sen ombraba que lo habiamos hecho con datos noramles. pero era mas deacuado este:
+
+```{r}
+ RegPoissonCategorias <-  glm(matriculados ~ relevel(modalidad, "ADMINISTRACION"), data = datos, family = poisson)
+summary(RegPoissonCategorias )
+```
+para el caso anterior, no se profundizo en eol curso, pero de manera similar a la regresion logisrtiva y possion, apesar deqque estos estimados no estan en las undiades interpretativas, los p valores si se interpretan igual(solo tendrian porblema si son muestras pequeñas), por lo uqe aca todos lso estimados son significativos(lo cual se deifenrencuia respcto a cuando se modelo con grupo de refrencia admisnitracion, de la manera normal de regresion lineal, ya que en ese momento kla difernecia de medias era de solo 11 unidades, y el p valor odnicanba q no se refutara la nula de que los grupos eran lo mismo) en este caso ahroa si se comapran las tasas de proporcion AHORA SI HAY DIFERENCIA EN LOS GRUPOS DE ADMINSITRACION Y LICENCIATURA
+```{r}
+exp(coef(RegPoissonCategorias))
+```
+ahora se obtiene una tasa de por ejemplo 1.0180465 de cantidad de matricualods de Licenciatura, por cantidad de amtricualods de admoniostracion,(respecto al curso, solo en el quizz se desea obtener un valor de estos, por lo que la sigueitne interpretacion es solo mia) por lo uqe esnto indica que a esta tasa crece la cantidad de matricualdos de licenciatura por cantidad de admisnitracion, osea que en otras palabras, por un estudainte de admisnitracion quie haya, crece la cantidad de estuidaiontes de licenciatura en 0.18 undiades mas. de manera similar, si se toma la tasa de maestria resepcto admisnitracion, por 1 estudainte de admisnitracion, apenas hay 0.10 de maestria. donde si se vuelve a revisar la gracia de violin echa anteriormente, es razonable pensar que efectivamente, hay mas de licenciatura ligeramente que de admisnitracion, en cuanto a matricualos.
+
+
+
+
+
+
